@@ -10,9 +10,9 @@ WHERE f.rating = 'R';
 -- 3º Encuentra los nombres de los actores que tengan un “actor_idˮ entre 30 y 40 
 
 SELECT concat("first_name" , ' ', "last_name") AS "Nombre", a.actor_id AS "Id_actor"
-FROM "actor" AS a	
-WHERE	"actor_id" BETWEEN 30 AND 40
-ORDER BY "actor_id"; 
+FROM actor AS a	
+WHERE	actor_id BETWEEN 30 AND 40
+ORDER BY actor_id; 
 
 -- 4º Obtén las películas cuyo idioma coincide con el idioma original 
 
@@ -37,7 +37,7 @@ WHERE a.last_name = 'ALLEN' ;
 -- 7º Encuentra la cantidad total de películas en cada clasificación de la tabla “filmˮ y muestra la clasificación junto con el recuento
 
 SELECT "rating" AS "Calificación" , COUNT(film_id) AS "Total_peliculas"
-FROM	"film" 
+FROM	film 
 GROUP BY "rating" 
 ORDER BY "Total_peliculas" ASC ;
 
@@ -110,12 +110,11 @@ INNER	JOIN film_actor AS fa
 INNER JOIN film AS f 
 	ON fa.film_id = f.film_id 
 WHERE f.title = 'EGG IGBY'
-GROUP BY "Nombre" , "Titulo" 
 ORDER BY "Nombre" ;
 
 -- 18º Selecciona todos los nombres de las películas únicos.
 
-SELECT f.title AS "Titulo", count(DISTINCT f.film_id  ) AS "Número_peliculas"
+SELECT f.title AS "Titulo"
 FROM	film AS f 
 GROUP BY f.title
 ORDER BY f.title ;
@@ -139,8 +138,8 @@ INNER JOIN film_category AS fc
 ON f.film_id = fc.film_id 
 INNER JOIN	category AS c 
 ON c.category_id = fc.category_id 
-WHERE f.length > 110 
-GROUP BY "Categoria" 
+GROUP BY c."name" 
+HAVING AVG(f."length") > 110  
 ORDER BY "Categoria" ;
 
 -- 21º ¿Cuál es la media de duración del alquiler de las películas? 
@@ -156,9 +155,9 @@ ORDER BY "Nombre_y_Apellidos" ;
 
 -- 23º Números de alquiler por día, ordenados por cantidad de alquiler de forma descendente.
 
-SELECT DATE("rental_date") AS "Dia", COUNT("rental_date") AS "total_alquileres"
+SELECT DATE("rental_date") AS "Dia", COUNT(*) AS "total_alquileres"
 FROM rental AS r 
-GROUP BY DATE(rental_date)
+GROUP BY "Dia"
 ORDER BY total_alquileres DESC, "Dia";
 
 -- 24º Encuentra las películas con una duración superior al promedio.
@@ -228,9 +227,8 @@ FROM film AS f
 LEFT JOIN film_actor AS fa  
 	ON f.film_id = fa.film_id 
 LEFT JOIN actor AS a 
-	ON a.actor_id = fa.actor_id 
-GROUP BY "Titulo", "Nombre_actores"  
-ORDER BY "Titulo" asc ;
+	ON a.actor_id = fa.actor_id  
+ORDER BY "Titulo" ASC, "Nombre_actores" ;
 
 -- 32º Obtener todos los actores y mostrar las películas en las que han actuado, incluso si algunos actores no han actuado en ninguna película.
 
@@ -240,8 +238,7 @@ LEFT JOIN film_actor AS fa
 	ON a.actor_id = fa.actor_id 
 LEFT JOIN film AS f 
 	ON fa.film_id = f.film_id 
-GROUP BY "Titulo" , "Nombre_actores"  
-ORDER BY "Nombre_actores" asc ;
+ORDER BY "Nombre_actores" ASC, "Titulo" ;
 
 -- 33º Obtener todas las películas que tenemos y todos los registros de alquiler.
 
@@ -251,18 +248,15 @@ LEFT JOIN inventory AS i
 	ON f.film_id = I.film_id 
 LEFT JOIN rental AS r 
 	ON i.inventory_id = R.inventory_id 
-GROUP BY "Titulos" , "Registro_alquiler" , "Registro_devolución" 
-ORDER BY "Titulos" ;
+ORDER BY f.title , r.rental_date ;
 
 -- 34º Encuentra los 5 clientes que más dinero se hayan gastado con nosotros.
 
 SELECT concat( c.first_name , ' ', c.last_name ) AS "Nombre_cliente", SUM(p.amount) AS "Gasto_total"
 FROM customer AS c 
-LEFT	JOIN	rental AS r 
-	ON c.customer_id = r.customer_id
-LEFT JOIN payment AS p 
-	ON p.rental_id = r.rental_id 
-GROUP BY	"Nombre_cliente" 
+INNER JOIN payment AS p 
+	ON p.customer_id  = c.customer_id
+GROUP BY c.customer_id , "Nombre_cliente" 
 ORDER BY "Gasto_total" desc 
 LIMIT 5 ;
 
@@ -352,8 +346,8 @@ ORDER BY "Actor" ;
 
 -- 46º Encuentra todos los actores que no han participado en películas
 
-SELECT concat(a.first_name , ' ', a.last_name) AS "Nombre", f.title AS "Titulo"
-FROM actor AS a , film AS f 
+SELECT concat(a.first_name , ' ', a.last_name) AS "Nombre"
+FROM actor AS a 
 WHERE NOT EXISTS (
     SELECT 1
     FROM film_actor as fa
@@ -365,14 +359,14 @@ ORDER BY "Nombre" ;
 
 -- 47º Selecciona el nombre de los actores y la cantidad de películas en las que han participado.
 
-SELECT concat(a.first_name, ' ', a.last_name) AS "Nombre_actores", count(f.title) AS "Número_peliculas"
+SELECT concat(a.first_name, ' ', a.last_name) AS "Nombre_actor", count(f.title) AS "Número_peliculas"
 FROM actor AS a 
 INNER	JOIN film_actor AS fa 
-	ON A.actor_id = FA.film_id
+	ON A.actor_id = FA.actor_id 
 INNER JOIN film AS f 
 	ON fa.film_id = f.film_id 
-GROUP BY "Nombre_actores"  
-ORDER BY "Número_peliculas" DESC, "Nombre_actores" ;
+GROUP BY "Nombre_actor", a.actor_id   
+ORDER BY "Número_peliculas" DESC, "Nombre_actor" ;
 
 -- 48º Crea una vista llamada “actor_num_peliculasˮ que muestre los nombres de los actores y el número de películas en las que han participado.
 
@@ -380,7 +374,7 @@ CREATE VIEW actor_num_peliculas AS
 SELECT concat(a.first_name, ' ', a.last_name) AS "Nombre", count(f.title) AS "Número_peliculas"
 FROM actor AS a 
 INNER	JOIN film_actor AS fa 
-	ON A.actor_id = FA.film_id
+	ON A.actor_id = FA.actor_id
 INNER JOIN film AS f 
 	ON fa.film_id = f.film_id 
 GROUP BY "Nombre" 
@@ -498,8 +492,8 @@ ORDER BY ap.last_name ;
 
 -- 56º Encuentra el nombre y apellido de los actores que no han actuado en ninguna película de la categoría ‘Musicʼ.
 
-SELECT concat(a.first_name , ' ', a.last_name ) AS "Nombre", c.name AS "Categoria"
-FROM actor AS a , category AS c
+SELECT concat(a.first_name , ' ', a.last_name ) AS "Nombre"
+FROM actor AS a 
 WHERE NOT EXISTS (
 	SELECT 1
 	FROM film_actor AS fa 
@@ -510,20 +504,18 @@ WHERE NOT EXISTS (
 	WHERE a.actor_id = fa.actor_id 
 	AND c."name" = 'Music'
 	)
-	GROUP BY "Nombre" , "Categoria"   
-	ORDER BY "Nombre" , "Categoria" ;
+	ORDER BY "Nombre" ;
 
 -- 57º Encuentra el título de todas las películas que fueron alquiladas por más de 8 días.
 
 WITH días AS (
-	SELECT f.title AS "Titulo", count(r.rental_date - r.return_date) AS "Días_alquiler" 
+	SELECT f.title AS "Titulo", SUM(r.return_date::date  - r.rental_date::date ) AS "Días_alquiler" 
 	FROM rental AS r
 	INNER JOIN inventory AS i 
 		ON r.inventory_id = i.inventory_id
 	INNER	JOIN film AS f 
 		ON i.film_id = f.film_id 
 	GROUP BY f.title
-	ORDER BY f.title 
 	)
 SELECT *
 FROM días 
