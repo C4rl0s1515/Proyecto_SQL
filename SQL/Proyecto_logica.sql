@@ -544,7 +544,7 @@ ORDER BY "Titulo" ;
 
 -- 60º Encuentra los nombres de los clientes que han alquilado al menos 7 películas distintas. Ordena los resultados alfabéticamente por apellido.
 
-SELECT concat(c.first_name, ' ', c.last_name) AS "Nombre_cliente", count(DISTINCT f.film_id) AS "Número_alquileres"
+SELECT concat(c.first_name, ' ', c.last_name) AS "Nombre_cliente", count(distinct f.film_id) AS "Número_alquileres"
 FROM customer AS c 
 INNER JOIN rental AS r 
 	ON c.customer_id = r.customer_id 
